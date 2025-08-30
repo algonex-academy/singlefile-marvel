@@ -10,6 +10,17 @@ import TodoList from "./pages/tools/TodoList";
 import Notes from "./pages/tools/Notes";
 import WordCounter from "./pages/tools/WordCounter";
 import QRCode from "./pages/tools/QRCode";
+import DayCounter from "./pages/tools/DayCounter";
+import PomodoroTimer from "./pages/tools/PomodoroTimer";
+import Calendar from "./pages/tools/Calendar";
+import ImageToPdf from "./pages/tools/ImageToPdf";
+import Stopwatch from "./pages/tools/Stopwatch";
+import PasswordGenerator from "./pages/tools/PasswordGenerator";
+import TextSummarizer from "./pages/tools/TextSummarizer";
+import VoiceToText from "./pages/tools/VoiceToText";
+import CurrencyConverter from "./pages/tools/CurrencyConverter";
+import UnitConverter from "./pages/tools/UnitConverter";
+import Weather from "./pages/tools/Weather";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,10 +35,21 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/reminders" element={<Reminders />} />
+            <Route path="/day-counter" element={<DayCounter />} />
             <Route path="/todo" element={<TodoList />} />
             <Route path="/notes" element={<Notes />} />
+            <Route path="/pomodoro" element={<PomodoroTimer />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/image-to-pdf" element={<ImageToPdf />} />
+            <Route path="/text-summarizer" element={<TextSummarizer />} />
+            <Route path="/voice-to-text" element={<VoiceToText />} />
             <Route path="/word-counter" element={<WordCounter />} />
+            <Route path="/password-generator" element={<PasswordGenerator />} />
             <Route path="/qr-code" element={<QRCode />} />
+            <Route path="/currency-converter" element={<CurrencyConverter />} />
+            <Route path="/unit-converter" element={<UnitConverter />} />
+            <Route path="/stopwatch" element={<Stopwatch />} />
+            <Route path="/weather" element={<Weather />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
