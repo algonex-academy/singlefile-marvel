@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { PDFDocument } from 'pdf-lib';
 
 interface FileItem {
   id: string;
@@ -83,19 +84,34 @@ export default function FileMerger() {
 
     setIsProcessing(true);
     try {
-      // For demo purposes, we'll create a simple merged PDF representation
-      // In a real implementation, you'd use PDF-lib or similar library
-      const mergedContent = files.map(f => f.name).join(' + ');
+      // Create a new PDF document
+      const mergedPdf = await PDFDocument.create();
       
-      // Create a simple text file as demo
-      const blob = new Blob([`Merged PDF: ${mergedContent}\n\nThis is a demo implementation of PDF merging.`], {
-        type: 'text/plain'
-      });
+      // Process each file in order
+      for (const fileItem of files) {
+        const pdfBytes = await fileItem.file.arrayBuffer();
+        const pdf = await PDFDocument.load(pdfBytes);
+        const pageCount = pdf.getPageCount();
+        
+        // Copy all pages from current PDF
+        const pageIndices = Array.from({ length: pageCount }, (_, i) => i);
+        const copiedPages = await mergedPdf.copyPages(pdf, pageIndices);
+        
+        // Add copied pages to merged PDF
+        copiedPages.forEach((page) => {
+          mergedPdf.addPage(page);
+        });
+      }
       
+      // Serialize the merged PDF
+      const pdfBytes = await mergedPdf.save();
+      
+      // Create download
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'merged-document.txt';
+      link.download = `merged-document-${Date.now()}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -106,6 +122,7 @@ export default function FileMerger() {
         description: "PDFs merged and downloaded successfully",
       });
     } catch (error) {
+      console.error('PDF merge error:', error);
       toast({
         title: "Error",
         description: "Failed to merge PDF files",

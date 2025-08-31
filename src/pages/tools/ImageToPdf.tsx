@@ -3,6 +3,7 @@ import { FileImage, Upload, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { jsPDF } from 'jspdf';
 
 interface UploadedImage {
   id: string;
@@ -84,35 +85,34 @@ export default function ImageToPdf() {
     setIsGenerating(true);
 
     try {
-      // Create a simple PDF using canvas and download
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Canvas not supported');
+      // Create new PDF document
+      const pdf = new jsPDF();
+      let isFirstPage = true;
 
-      // Set PDF page size (A4: 210 x 297 mm at 96 DPI = 794 x 1123 pixels)
-      canvas.width = 794;
-      canvas.height = 1123;
-
-      // Create PDF pages
-      const pages: string[] = [];
-      
       for (const imageData of images) {
-        // Clear canvas
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Load and draw image
+        // Add new page for each image (except the first one)
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+        isFirstPage = false;
+
+        // Load image to get dimensions
         const img = new Image();
         await new Promise<void>((resolve, reject) => {
           img.onload = () => {
-            // Calculate scaling to fit image in page with margin
-            const margin = 50;
-            const maxWidth = canvas.width - (margin * 2);
-            const maxHeight = canvas.height - (margin * 2);
+            // Get PDF page dimensions (A4: 210 x 297 mm)
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            
+            // Calculate image dimensions to fit the page with margin
+            const margin = 10;
+            const maxWidth = pageWidth - (margin * 2);
+            const maxHeight = pageHeight - (margin * 2);
             
             let { width, height } = img;
             const aspectRatio = width / height;
             
+            // Scale image to fit page
             if (width > maxWidth || height > maxHeight) {
               if (aspectRatio > maxWidth / maxHeight) {
                 width = maxWidth;
@@ -124,11 +124,11 @@ export default function ImageToPdf() {
             }
             
             // Center image on page
-            const x = (canvas.width - width) / 2;
-            const y = (canvas.height - height) / 2;
+            const x = (pageWidth - width) / 2;
+            const y = (pageHeight - height) / 2;
             
-            ctx.drawImage(img, x, y, width, height);
-            pages.push(canvas.toDataURL('image/jpeg', 0.9));
+            // Add image to PDF
+            pdf.addImage(imageData.url, 'JPEG', x, y, width, height);
             resolve();
           };
           img.onerror = reject;
@@ -136,18 +136,13 @@ export default function ImageToPdf() {
         });
       }
 
-      // Simple PDF generation using data URLs
-      // In a real implementation, you'd use jsPDF or pdf-lib
-      const pdfContent = pages.map((page, index) => 
-        `Page ${index + 1}: ${page}`
-      ).join('\n\n');
-      
-      const blob = new Blob([pdfContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
+      // Save and download PDF
+      const pdfBlob = pdf.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
       
       const a = document.createElement('a');
       a.href = url;
-      a.download = `images-to-pdf-${Date.now()}.txt`;
+      a.download = `images-to-pdf-${Date.now()}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -158,6 +153,7 @@ export default function ImageToPdf() {
         description: "Your PDF has been created and downloaded",
       });
     } catch (error) {
+      console.error('PDF generation error:', error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate PDF. Please try again.",

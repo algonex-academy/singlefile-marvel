@@ -3,6 +3,7 @@ import { FileImage, Upload, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import * as pdfjsLib from 'pdfjs-dist';
 
 interface ExtractedImage {
   id: string;
@@ -29,41 +30,51 @@ export default function PdfToImage() {
 
     setIsProcessing(true);
     try {
-      // Using PDF-lib for PDF processing
+      // Set worker source for PDF.js
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.js`;
+      
       const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
+      const loadingTask = pdfjsLib.getDocument(arrayBuffer);
+      const pdf = await loadingTask.promise;
       
-      // For demo purposes, we'll create a placeholder image
-      // In a real implementation, you'd use pdf2pic or similar library
-      const canvas = document.createElement('canvas');
-      canvas.width = 595;
-      canvas.height = 842;
-      const ctx = canvas.getContext('2d');
+      const images: ExtractedImage[] = [];
       
-      if (ctx) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#333333';
-        ctx.font = '24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('PDF Page Converted to Image', canvas.width / 2, canvas.height / 2);
-        ctx.fillText('(This is a demo implementation)', canvas.width / 2, canvas.height / 2 + 40);
+      // Process each page
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const scale = 2.0; // Higher scale for better quality
+        const viewport = page.getViewport({ scale });
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+        
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: viewport,
+          canvas: canvas,
+        };
+        
+        await page.render(renderContext).promise;
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        images.push({
+          id: crypto.randomUUID(),
+          dataUrl,
+          pageNumber: pageNum,
+        });
       }
       
-      const dataUrl = canvas.toDataURL('image/png');
-      
-      const newImage: ExtractedImage = {
-        id: crypto.randomUUID(),
-        dataUrl,
-        pageNumber: 1,
-      };
-
-      setExtractedImages([newImage]);
+      setExtractedImages(images);
       toast({
         title: "Success",
-        description: "PDF converted to image successfully",
+        description: `PDF converted to ${images.length} image(s) successfully`,
       });
     } catch (error) {
+      console.error('PDF processing error:', error);
       toast({
         title: "Error",
         description: "Failed to process PDF file",
