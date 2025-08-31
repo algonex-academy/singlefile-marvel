@@ -14,6 +14,10 @@ import DayCounter from "./pages/tools/DayCounter";
 import PomodoroTimer from "./pages/tools/PomodoroTimer";
 import Calendar from "./pages/tools/Calendar";
 import ImageToPdf from "./pages/tools/ImageToPdf";
+import PdfToImage from "./pages/tools/PdfToImage";
+import FileMerger from "./pages/tools/FileMerger";
+import ImageCompressor from "./pages/tools/ImageCompressor";
+import Dictionary from "./pages/tools/Dictionary";
 import Stopwatch from "./pages/tools/Stopwatch";
 import PasswordGenerator from "./pages/tools/PasswordGenerator";
 import TextSummarizer from "./pages/tools/TextSummarizer";
@@ -41,6 +45,10 @@ const App = () => (
             <Route path="/pomodoro" element={<PomodoroTimer />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/image-to-pdf" element={<ImageToPdf />} />
+            <Route path="/pdf-to-image" element={<PdfToImage />} />
+            <Route path="/file-merger" element={<FileMerger />} />
+            <Route path="/image-compressor" element={<ImageCompressor />} />
+            <Route path="/dictionary" element={<Dictionary />} />
             <Route path="/text-summarizer" element={<TextSummarizer />} />
             <Route path="/voice-to-text" element={<VoiceToText />} />
             <Route path="/word-counter" element={<WordCounter />} />
